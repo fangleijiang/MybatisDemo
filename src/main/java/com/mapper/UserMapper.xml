@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.model.User">
+<!-- 配置缓存 -->
+<!-- 
+LRU – 最近最少使用的：移除最长时间不被使用的对象。
+FIFO – 先进先出：按对象进入缓存的顺序来移除它们。
+ -->
+	<cache eviction="FIFO" flushInterval="60000" size="1024" readOnly="true" />
+	<select id="getObjectById" resultType="User">
+		select * from t_user where
+		id = #{id}
+	</select>
+
+	<insert id="add" parameterType="User">
+		insert into
+		t_user(id,username,password)
+		values(#{id},#{username},#{password})
+	</insert>
+
+	<update id="update" parameterType="User">
+		update t_user set
+		username=#{username},password=#{password} where id=#{id}
+	</update>
+
+	<delete id="delete" parameterType="int">
+		delete from t_user where
+		id=#{id}
+	</delete>
+
+	<resultMap type="User" id="userRole">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="username" property="username" jdbcType="VARCHAR" />
+		<result column="pwd" property="password" jdbcType="VARCHAR" />
+		<collection property="listRole" javaType="list" ofType="Role">
+			<id column="roles_id" property="id" />
+			<result column="role_text" property="text" />
+		</collection>
+	</resultMap>
+	<select id="listAll" resultMap="userRole" useCache="true">
+		SELECT
+		t_user.id,
+		t_user.username,
+		t_user.`password`,
+		t_user_role.id
+		user_role_id,
+		t_user_role.user_id,
+		t_user_role.role_id,
+		t_role.id
+		roles_id,
+		t_role.text role_text
+		FROM
+		t_user
+		INNER JOIN t_user_role ON
+		t_user.id = t_user_role.user_id
+		INNER JOIN t_role ON
+		t_user_role.role_id = t_role.id
+	</select>
+
+
+	<resultMap type="User" id="pagemap">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="username" property="username" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="pager" resultMap="pagemap">
+		SELECT *
+		FROM t_user LIMIT
+		#{offset},#{pageSize}
+	</select>
+
+	<select id="allRow" resultType="int">
+		select count(*) from t_user
+	</select>
+</mapper>
